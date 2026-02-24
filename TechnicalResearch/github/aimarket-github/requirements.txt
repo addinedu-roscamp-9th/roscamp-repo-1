@@ -1,0 +1,14 @@
+# AImarket - Python 의존성
+
+# GUI 프레임워크
+PyQt6
+
+# 데이터베이스
+pymysql
+
+# 환경변수 관리
+python-dotenv
+
+# ROS 2 (rclpy)는 apt로 설치합니다:
+# sudo apt install ros-jazzy-rclpy
+# sudo apt install ros-jazzy-std-msgs

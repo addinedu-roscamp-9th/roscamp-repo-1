@@ -1,0 +1,42 @@
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 가상환경
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 환경 변수
+.env
+
+# 데이터베이스
+*.db
+*.sqlite3
+
+# 로그
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 테스트 커버리지
+.coverage
+htmlcov/
+.pytest_cache/
+
+# 빌드
+dist/
+build/
+*.egg-info/

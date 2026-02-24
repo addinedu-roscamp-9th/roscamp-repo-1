@@ -1,0 +1,25 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+pydantic-settings==2.0.3
+httpx==0.25.1
+python-multipart==0.0.6
+python-dotenv>=1.0
+
+# LLM / AI
+openai>=1.3.0
+
+# Vision Processing
+opencv-python==4.8.1.78
+numpy==1.24.3
+
+# Database
+sqlalchemy>=2.0
+pymysql>=1.1.0
+cryptography>=41.0.0
+
+# Testing
+pytest>=8.0
+requests>=2.31.0
+
+pymycobot>=3.3.0
