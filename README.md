@@ -32,9 +32,11 @@ ROS2와 AI를 활용한 **AI 기반 지능형 무인 마트 자동화 시스템*
 
 ## MAP
 <img width="400" height="800" alt="제목을 입력해주세요" src="https://github.com/user-attachments/assets/35a33084-b374-4e5b-a7ca-e3fea746ff4e" />
-## 기술 스택 (Tech Stack)
+
 
 ---
+
+## 기술 스택 (Tech Stack)
 
 | Category | Technology |
 |----------|------------|
