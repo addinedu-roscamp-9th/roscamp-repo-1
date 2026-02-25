@@ -133,6 +133,8 @@ PiCamera2 → YOLOv8n → HSV 색상 판별 → /traffic_light_state 발행
 
 - **마커 크기:** 3cm (DICT_4X4_50)
 - **출력:** 마커 ID, XYZ 위치(cm), Roll/Pitch/Yaw 각도(°)
+<img width="528" height="462" alt="스크린샷 2026-02-24 15-12-03" src="https://github.com/user-attachments/assets/5ef80ba8-c5b3-46d3-bae9-8eeb6a3662b6" />
+<img width="602" height="542" alt="Screenshot from 2026-02-24 11-39-02" src="https://github.com/user-attachments/assets/ec1a0a33-1609-4d2a-8043-3286dab65ee3" />
 
 ---
 
@@ -291,7 +293,7 @@ python3 ros2/mobile_robot/navigation/route_567.py
 
 ## Project Schedule
 
-- **기간:** YYYY.MM.DD ~ YYYY.MM.DD
+- **기간:** 2025.12.29 ~ 2026.02.27
 
 <!-- 간트차트 이미지가 있으면 아래에 넣기 -->
 <!-- ![Project Schedule](docs/images/gantt_chart.png) -->
