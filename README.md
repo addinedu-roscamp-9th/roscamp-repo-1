@@ -94,7 +94,6 @@ ROS2와 AI를 활용한 **AI 기반 지능형 무인 마트 자동화 시스템*
 ⑥ LCD에 도착 안내 + LED 색상 표시
 ```
 
-![Scenario](docs/images/scenario.png)
 
 ---
 
