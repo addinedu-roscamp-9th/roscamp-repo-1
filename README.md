@@ -184,7 +184,7 @@ AMCL의 공분산이 수렴할 때까지 **자동 제자리 회전**하여 위�
 ③ /amcl_pose 구독 → 공분산 모니터링
 ④ XY/Yaw 공분산이 임계값 이하 1.5초 유지 → 수렴 완료, 정지
 ```
-<img width="239" height="146" alt="스크린샷 2026-02-25 12-26-42" src="https://github.com/user-attachments/assets/50a9c441-8437-4b76-adbc-abd44302185f" /> ⇒
+<img width="239" height="146" alt="스크린샷 2026-02-25 12-26-42" src="https://github.com/user-attachments/assets/50a9c441-8437-4b76-adbc-abd44302185f" /> 
 <img width="239" height="146" alt="스크린샷 2026-02-25 12-26-51" src="https://github.com/user-attachments/assets/3a2d79f6-0faa-43e8-9119-d8c85e0c3b71" />
 
 ---
