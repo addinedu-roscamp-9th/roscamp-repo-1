@@ -21,10 +21,12 @@ ROS2와 AI를 활용한 **AI 기반 지능형 무인 마트 자동화 시스템*
 
 | Name | Role |
 |------|------|
-| (팀원) | Manipulator(로봇팔), ArUco 인식/집기, 서버 연동 |
-| (팀원) | Mobile Robot(Nav2/AMCL), 경로/정지 제어 |
-| (팀원) | Server/FastAPI/MySQL, 주문/작업 생성 |
-| (팀원) | Vision(YOLO/스트리밍), 신호등 인식 |
+| (이준호) | Manipulator(로봇팔), ArUco 인식/집기, 서버 연동 |
+| (이현서) | Manipulator(로봇팔), ArUco 인식/집기, 서버 연동 |
+| (이민정) | Mobile Robot(Nav2/AMCL), 경로/정지 제어, Vision(YOLO/스트리밍), 신호등 인식 |
+| (김정래) | Mobile Robot(Nav2/AMCL), 경로/정지 제어, Vision(YOLO/스트리밍), 신호등 인식 |
+| (김형준) | Server/FastAPI/MySQL, 주문/작업 생성, 서버 생성 |
+| (조도훈) | Server/FastAPI/MySQL, 주문/작업 생성, 서버 생성 |
 
 ---
 
