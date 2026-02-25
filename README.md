@@ -123,6 +123,8 @@ PiCamera2 → YOLOv8n → HSV 색상 판별 → /traffic_light_state 발행
 
 - **Flask 웹 스트리밍:** `http://PINKY_IP:5000/video` 로 실시간 영상 확인
 - **LED 연동:** 빨간불/초록불에 따라 Pinky LED 색상 자동 변경
+<img width="300" height="300" alt="스크린샷 2026-02-25 12-22-47" src="https://github.com/user-attachments/assets/ec53e9c8-c5d4-4b84-9afc-9f55be888cce" />
+<img width="300" height="300" alt="스크린샷 2026-02-25 12-22-59" src="https://github.com/user-attachments/assets/58833a70-f604-49ea-af3b-5ac6e834b937" />
 
 ### ArUco 마커 6D Pose 추정
 
