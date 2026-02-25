@@ -74,8 +74,6 @@ ROS2와 AI를 활용한 **AI 기반 지능형 무인 마트 자동화 시스템*
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-![System Architecture](docs/images/system_architecture.png)
-
 ---
 
 ## Implements
