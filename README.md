@@ -1,7 +1,7 @@
 ROS2와 AI를 활용한 **AI 기반 지능형 무인 마트 자동화 시스템**  
 (결제 이후: 작업 생성 → 로봇팔 집기/적재 → 자율주행 운반 → 비전 기반 주행 제어)
 
-** Presentation:** (링크)  |  ** < Video Dem0="https://www.youtube.com/watch?v=Zob6Lzrnn_4">**
+** Presentation:** (링크)  |  < Video Dem0="https://www.youtube.com/watch?v=Zob6Lzrnn_4">
 
 ---
 
