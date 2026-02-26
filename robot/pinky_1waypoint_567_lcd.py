@@ -1,148 +1,182 @@
 #!/usr/bin/env python3
+import time
+import subprocess
+import os
+import signal
+
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.action import ActionClient
 
-from geometry_msgs.msg import Twist, PoseWithCovarianceStamped
-from std_srvs.srv import Empty
+from geometry_msgs.msg import PoseStamped
+from nav2_msgs.action import NavigateToPose
+from action_msgs.msg import GoalStatus
+
+from pinky_interfaces.srv import SetLed
+
+# LCD
+from pinky_lcd import LCD
+from PIL import Image, ImageDraw, ImageFont
 
 
-class AutoSpinLocalize(Node):
-
+class WaypointRunner(Node):
     def __init__(self):
-        super().__init__('auto_spin_localize')
+        super().__init__("waypoint_runner_with_lcd")
 
-        # ===== 설정값 =====
-        self.cmd_vel_topic = '/cmd_vel'
-        self.spin_speed = 0.6          # rad/s
-        self.max_time = 35.0           # sec
-        self.settle_time = 1.5         # sec
-
-        self.xy_cov_thresh = 0.05      # m^2
-        self.yaw_cov_thresh = 0.20     # rad^2
-
-        self.global_service = '/reinitialize_global_localization'
-        # ==================
-
-        self.cmd_pub = self.create_publisher(Twist, self.cmd_vel_topic, 10)
-
-        self.create_subscription(
-            PoseWithCovarianceStamped,
-            '/amcl_pose',
-            self.amcl_cb,
-            qos_profile_sensor_data
+        # led_server 자동 실행
+        self.led_proc = subprocess.Popen(
+            ["ros2", "run", "pinky_led", "led_server"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            preexec_fn=os.setsid
         )
 
-        self.gl_cli = self.create_client(Empty, self.global_service)
+        self.navigate_action_name = "/navigate_to_pose"
 
-        self.last_cov_ok_time = None
+        self.waypoints = [
+            (-0.02303434895238122, 0.1364322663572329, 0.044065607282374,  0.9990286393566681),
+            (-0.06635784676736996, 0.5782167513155609, 0.7195170305099051, 0.6944747963793995),
+            (-0.05697984997934965, 1.4278316079965387, 0.7210638963950985, 0.6928685714589158),
+        ]
 
-        self.started = False
-        self.start_time = None
+        self._ac = ActionClient(self, NavigateToPose, self.navigate_action_name)
+        self._ac.wait_for_server()
 
-        self.global_requested = False
-        self.global_future = None
-        self.global_done = False
+        self.led_cli = self.create_client(SetLed, "/set_led")
 
-        self.last_wait_log = 0.0
+        self._idx = 0
+        self._inflight = False
+        self._waiting_at_2 = False
+        self._wait_until = 0.0
 
-        self.timer = self.create_timer(0.1, self.loop)
+        # 🔥 추가: 최종 도착 후 대기 상태
+        self._waiting_pickup = False
 
-        self.get_logger().info("초기위치 자동 찾기 시작! (서비스 1회 호출 + 회전 안정화)")
+        self.timer = self.create_timer(0.2, self.loop)
 
-    def amcl_cb(self, msg: PoseWithCovarianceStamped):
-        cov = msg.pose.covariance
-        cov_x = cov[0]
-        cov_y = cov[7]
-        cov_yaw = cov[35]
+    # ---------------- LED ----------------
+    def set_led_fill(self, r, g, b):
+        req = SetLed.Request()
+        req.command = "fill"
+        req.r = r
+        req.g = g
+        req.b = b
+        self.led_cli.call_async(req)
 
-        cov_ok = (
-            cov_x < self.xy_cov_thresh and
-            cov_y < self.xy_cov_thresh and
-            cov_yaw < self.yaw_cov_thresh
-        )
+    # ---------------- LCD 출력 ----------------
+    def show_pickup_message(self):
+        try:
+            lcd = LCD()
 
-        now = self.get_clock().now()
+            w = int(getattr(lcd, "width", 240))
+            h = int(getattr(lcd, "height", 240))
 
-        if cov_ok:
-            if self.last_cov_ok_time is None:
-                self.last_cov_ok_time = now
-        else:
-            self.last_cov_ok_time = None
+            img = Image.new("RGB", (w, h), (0, 0, 0))
+            draw = ImageDraw.Draw(img)
 
-    def spin_robot(self, on: bool):
-        t = Twist()
-        if on:
-            t.angular.z = float(self.spin_speed)
-        self.cmd_pub.publish(t)
+            font_path = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 
-    def maybe_request_global(self):
-
-        if not self.gl_cli.service_is_ready():
-            now_s = self.get_clock().now().nanoseconds / 1e9
-            if now_s - self.last_wait_log > 1.0:
-                self.get_logger().warn("global localization 서비스 대기중...")
-                self.last_wait_log = now_s
-            return
-
-        if self.global_requested:
-            return
-
-        self.global_future = self.gl_cli.call_async(Empty.Request())
-        self.global_requested = True
-        self.get_logger().info("AMCL 전역 초기화 요청 전송!")
-
-    def check_global_future(self):
-
-        if not self.global_requested or self.global_done or self.global_future is None:
-            return
-
-        if self.global_future.done():
             try:
-                _ = self.global_future.result()
-                self.get_logger().info("AMCL 전역 초기화 응답 수신(완료)!")
+                font = ImageFont.truetype(font_path, 26)
             except Exception as e:
-                self.get_logger().error(f"AMCL 전역 초기화 응답 예외: {e}")
-            self.global_done = True
+                self.get_logger().error(f"폰트 로드 실패: {e}")
+                font = None
+
+            text = "물건을\n회수해주세요."
+
+            draw.multiline_text(
+                (20, h//2 - 30),
+                text,
+                fill=(255, 255, 255),
+                font=font,
+                spacing=8
+            )
+
+            lcd.img_show(img)
+
+            self.get_logger().info("LCD 표시 완료 → 15초 대기 시작")
+
+        except Exception as e:
+            self.get_logger().error(f"LCD 출력 실패: {e}")
+
+    # ------------------------------------------------
 
     def loop(self):
 
-        if not self.started:
-            self.started = True
-            self.start_time = self.get_clock().now()
-            self.get_logger().info("빙글빙글 회전 시작!")
+        # 🔴 2번 waypoint (횡단보도) 대기
+        if self._waiting_at_2:
+            if time.time() >= self._wait_until:
+                self.set_led_fill(0, 0, 0)
+                self._waiting_at_2 = False
+                self._idx += 1
             return
 
-        # 1) 회전
-        self.spin_robot(True)
-
-        # 2) global localization 1회 요청
-        self.maybe_request_global()
-        self.check_global_future()
-
-        # 3) 타임아웃
-        elapsed = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
-        if elapsed > self.max_time:
-            self.spin_robot(False)
-            self.get_logger().warn("시간 초과! 정지 후 종료.")
-            rclpy.shutdown()
+        # 🔵 최종 목적지 수령 대기
+        if self._waiting_pickup:
+            if time.time() >= self._wait_until:
+                self.get_logger().info("15초 경과 → 자동 복귀 시작")
+                self._waiting_pickup = False
+                self._idx = 0          # 🔥 처음 waypoint로 복귀
+                self._inflight = False
             return
 
-        # 4) 안정화 체크
-        if self.last_cov_ok_time is not None:
-            stable = (self.get_clock().now() - self.last_cov_ok_time).nanoseconds / 1e9
-            if stable >= self.settle_time:
-                self.spin_robot(False)
-                self.get_logger().info("초기위치 안정화 완료! 정지 후 종료.")
-                rclpy.shutdown()
-                return
+        # 🟢 모든 경로 완료 → LCD 출력 + 15초 대기
+        if self._idx >= len(self.waypoints):
+            self.get_logger().info("최종 목적지 도착 → LCD 출력")
+            self.show_pickup_message()
+            self._waiting_pickup = True
+            self._wait_until = time.time() + 15.0   # 🔥 15초 설정
+            return
+
+        # 🟡 일반 waypoint 이동
+        if not self._inflight:
+            x, y, qz, qw = self.waypoints[self._idx]
+
+            goal = NavigateToPose.Goal()
+            ps = PoseStamped()
+            ps.header.frame_id = "map"
+            ps.header.stamp = self.get_clock().now().to_msg()
+
+            ps.pose.position.x = x
+            ps.pose.position.y = y
+            ps.pose.orientation.z = qz
+            ps.pose.orientation.w = qw
+
+            goal.pose = ps
+
+            fut = self._ac.send_goal_async(goal)
+            fut.add_done_callback(self.goal_response_cb)
+
+            self._inflight = True
+
+    def goal_response_cb(self, future):
+        goal_handle = future.result()
+        goal_handle.get_result_async().add_done_callback(self.result_cb)
+
+    def result_cb(self, future):
+        status = future.result().status
+        self._inflight = False
+
+        if status != GoalStatus.STATUS_SUCCEEDED:
+            self.get_logger().error("도착 실패 → 다음 경로")
+            self._idx += 1
+            return
+
+        # 🔴 2번에서 LED + 6초 정지
+        if self._idx == 1:
+            self.set_led_fill(255, 0, 0)
+            self._waiting_at_2 = True
+            self._wait_until = time.time() + 6.0
+            return
+
+        self._idx += 1
 
 
 def main():
     rclpy.init()
-    node = AutoSpinLocalize()
+    node = WaypointRunner()
     rclpy.spin(node)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
